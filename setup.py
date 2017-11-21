@@ -16,4 +16,4 @@ config = {
     'name': 'getajob'
 }
 
-setup(**config)
+setup(**config, install_requires=['bs4', 'requests'])
