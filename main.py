@@ -9,19 +9,31 @@ from os import getcwd as cwd
 
 
 avant = "https://jobs.lever.co/avant/1c9e827f-19da-49ea-91cd-cce64aea0b56"
-target = "C:/Users/mthom/dvStuff/getajob/gab_output.txt"  # cwd() + "target.txt"
+offline_avant = "C:/Users/mthom/dvStuff/getajob/offline_html/Avant - Software Engineer.html"
+target = "C:/Users/mthom/dvStuff/getajob/offline_output.txt"  # cwd() + "target.txt"
+
+
+def get_page(url, online=True):
+    # can get online or offline HTML files
+    if online:
+        html = requests.get(url).text
+    else:
+        html = open(url, 'r').read()
+    return html
+
+
 
 def main(sample_site):
     # TODO: If you can process this to remove all <script> and <style> tags,
     # TODO: Your return value will be easier to work with.
-    r = requests.get(sample_site)
-    soup = BeautifulSoup(r.text, "html5lib").prettify()
-    words = soup
-    return words
+
+    page = get_page(sample_site, False)
+    soup = BeautifulSoup(page, "html5lib").prettify()
+    return soup
 
 
 if __name__ == '__main__':
-    s = main(avant)
+    s = main(offline_avant)
     with open(target, 'w', encoding='UTF-8') as file:
         for piece in s:
             file.write(str(piece))
