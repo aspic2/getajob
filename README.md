@@ -27,3 +27,10 @@ and jobs that I don't like.
  
     - Write a scraper to scan websites like remoteok.io and find jobs with many
     appealing words and few unappealing words
+    
+## ISSUES THUS FAR ##
+Trouble parsing different webpages:
+    - <style> and <script> elements making it through filters
+    - punctuation interfering with word frequency count
+    - plural words counted separately
+    

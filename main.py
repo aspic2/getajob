@@ -9,11 +9,20 @@ from os import getcwd as cwd
 import re
 import string
 
-
+# Job Listings
 avant = "https://jobs.lever.co/avant/1c9e827f-19da-49ea-91cd-cce64aea0b56"
 offline_avant = "C:/Users/mthom/dvStuff/getajob/offline_html/Avant - Software Engineer.html"
+peak6 = "https://www.peak6.com/careers/843215/?gh_jid=843215"
+good_jobs = [avant, peak6]
+
+# file paths
 target_path = "C:/Users/mthom/dvStuff/getajob/"  # cwd() + "target.txt"
 ut = ["script", "style", "head"]
+target = target_path + "output_dict.txt"
+
+#data structures
+bad_dict = {}
+good_dict = {}
 
 
 def get_page(url, online=True):
@@ -28,7 +37,7 @@ def get_page(url, online=True):
 def get_text(soup, unwanted_tags):
     word_list = []
     word_length = 25
-    tags_list = soup.find_all()
+    tags_list = soup.find_all("body")
     for tag in tags_list:
         # TODO: This is not skipping all unwanted tags
         if tag.name in unwanted_tags:
@@ -48,16 +57,22 @@ def get_text(soup, unwanted_tags):
         words = tag.text.split(" ")
         for word in words:
             if valid_word(word):
-                word_list.append(word)
+                # Normalize the words before adding them to improve comparisons
+                word_list.append(word.lower())
     return word_list
 
 
 def valid_word(word):
     max_length = 20
-    for char in word:
-        if char in string.punctuation:
-            return False
-    return len(word) < max_length
+    word_len = len(word)
+    if word_len < 1:
+        return False
+    if word[0] in string.punctuation:
+        return False
+    #for char in word:
+    #    if char in string.punctuation:
+    #        pass #return False
+    return word_len < max_length
 
 
 def add_to_dict(word, word_dict):
@@ -68,29 +83,45 @@ def add_to_dict(word, word_dict):
     return word_dict
 
 
-def build_dict(word_list):
-    d = {}
+def build_dict(hash_table, word_list):
     for w in word_list:
-        add_to_dict(w, d)
-    return d
+        add_to_dict(w, hash_table)
+    return hash_table
 
 
 def make_soup(page):
     # TODO: If you can process this to remove all <script> and <style> tags,
     # TODO: Your return value will be easier to work with.
-    soup = BeautifulSoup(page, "html5lib")
+    soup = BeautifulSoup(page, "html.parser")
     return soup
 
 
-if __name__ == '__main__':
-    target_file = target_path + "output_dict.txt"
-    page = get_page(offline_avant, False)
+def main():
+    for j in good_jobs:
+        good_words = scrape_page(j, good_dict)
+    write_to_file(good_words, target)
+
+
+def scrape_page(url, frequency_dict):
+    page = get_page(url)
     s = make_soup(page)
     frequent_words = get_text(s, ut)
-    frequencies = list(build_dict(frequent_words).items())
-    frequencies.sort(key=lambda x: x[1], reverse=True)
+    w_dict = build_dict(frequency_dict, frequent_words)
+    # TODO: refactor so this doesn't need to be resorted for each page
+    frequencies = sorted(w_dict.items(), key=lambda x: x[1], reverse=True)
+    return frequencies
+
+
+def write_to_file(frequencies, target_file):
     with open(target_file, 'w', encoding='UTF-8') as file:
-        #for fw in frequent_words:
-        file.write(str(frequencies))
+        counter = 1
+        for fw in frequencies:
+            file.write(str(counter) + " " + str(fw) + "\n")
+            counter += 1
+
+
+if __name__ == '__main__':
+    main()
+    valid_word("!pizza!")
 
 
