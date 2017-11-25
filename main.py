@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from os import getcwd as cwd
 import string
+import re
 
 
 # Job Listings
@@ -25,6 +26,7 @@ offline_jobs_file = cwd() + "/job_postings/offline_jobs.txt"
 bad_dict = {}
 good_dict = {}
 good_jobs = []
+punctuation = re.compile("\W")
 
 
 def get_urls(filepath, url_list, online=True):
@@ -52,7 +54,7 @@ def get_page(url, online=True):
     return html
 
 
-def get_text(soup, unwanted_tags):
+def get_text(soup, unwanted_tags, regex):
     """Should clean up the source HTML to return only displayed text.
     Currently not fully removing CSS and Script data"""
     word_list = []
@@ -61,28 +63,18 @@ def get_text(soup, unwanted_tags):
         # TODO: This is not skipping all unwanted tags
         if tag.name in unwanted_tags:
             continue
-        words = tag.text.split(" ")
-        for word in words:
-            # TODO: this method only removes leading and trailing punctuation.
-            # TODO: revise to remove _all_ punctuation
-            if valid_word(word):
-                # Normalize the words before adding them to improve comparisons
-                word = word.strip(string.punctuation + "\n" + '"' + "'" + "\t" + ".").lower()
-                word_list.append(word)
+        words = regex.split(tag.text)
+        for w in words:
+            if valid_word(w):
+                word_list.append(w.lower())
     return word_list
 
 
 def valid_word(word):
+    min_length = 1
     max_length = 20
     word_len = len(word)
-    if word_len < 1:
-        return False
-    if word[0] in string.punctuation:
-        return False
-    #for char in word:
-    #    if char in string.punctuation:
-    #        pass #return False
-    return word_len < max_length
+    return min_length < word_len < max_length
 
 
 def add_to_dict(word, word_dict):
@@ -109,7 +101,7 @@ def make_soup(page):
 def scrape_page(url, frequency_dict, online=True):
     page = get_page(url, online)
     s = make_soup(page)
-    frequent_words = get_text(s, ut)
+    frequent_words = get_text(s, ut, punctuation)
     w_dict = build_dict(frequency_dict, frequent_words)
     # TODO: refactor so this doesn't need to be resorted for each page
     frequencies = sorted(w_dict.items(), key=lambda x: x[1], reverse=True)
