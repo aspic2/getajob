@@ -9,20 +9,30 @@ from os import getcwd as cwd
 import re
 import string
 
-# Job Listings
-avant = "https://jobs.lever.co/avant/1c9e827f-19da-49ea-91cd-cce64aea0b56"
-offline_avant = "C:/Users/mthom/dvStuff/getajob/offline_html/Avant - Software Engineer.html"
-peak6 = "https://www.peak6.com/careers/843215/?gh_jid=843215"
-good_jobs = [avant, peak6]
 
 # file paths
-target_path = "C:/Users/mthom/dvStuff/getajob/"  # cwd() + "target.txt"
+target_path = cwd() + "target.txt"
 ut = ["script", "style", "head"]
 target = target_path + "output_dict.txt"
+good_jobs_file = cwd() + "/job_postings/good_jobs.txt"
 
-#data structures
+# data storage
 bad_dict = {}
 good_dict = {}
+good_jobs = []
+
+
+def get_urls(filepath, url_list):
+    # return a list of job posting URLs or filepaths
+    with open(filepath, 'r') as f:
+        for line in f:
+            # standardize this to work for local files, too
+            # -1 to get rid of \n char. -2 to get rid of " and \n
+            end = len(line) - 2  # compensate for linebreak and quotation
+            start = line.index("http")
+            url = line[start:end]
+            url_list.append(url)
+    return url_list
 
 
 def get_page(url, online=True):
@@ -36,26 +46,14 @@ def get_page(url, online=True):
 
 def get_text(soup, unwanted_tags):
     word_list = []
-    word_length = 25
     tags_list = soup.find_all("body")
     for tag in tags_list:
         # TODO: This is not skipping all unwanted tags
         if tag.name in unwanted_tags:
             continue
-        # TODO: Not working
-        if "<script" in tag:
-            beginning = tag.index("<script")
-            end = tag.index("</script>") + 9
-            tag = tag.join(tag[:beginning], tag[end:])
-            print(tag)
-        if "<style" in tag:
-            beginning = tag.index("<style")
-            end = tag.index("</style>") + 9
-            tag = tag.join(tag[:beginning], tag[end:])
-            print(tag)
-        #print(tag.name, tag.text)
         words = tag.text.split(" ")
         for word in words:
+            # TODO: clean word param to have no punctuation before passing in
             if valid_word(word):
                 # Normalize the words before adding them to improve comparisons
                 word_list.append(word.lower())
@@ -96,12 +94,6 @@ def make_soup(page):
     return soup
 
 
-def main():
-    for j in good_jobs:
-        good_words = scrape_page(j, good_dict)
-    write_to_file(good_words, target)
-
-
 def scrape_page(url, frequency_dict):
     page = get_page(url)
     s = make_soup(page)
@@ -120,8 +112,15 @@ def write_to_file(frequencies, target_file):
             counter += 1
 
 
+def main():
+    job_list = get_urls(good_jobs_file, good_jobs)
+    for j in job_list:
+        good_words = scrape_page(j, good_dict)
+    write_to_file(good_words, target)
+
+
 if __name__ == '__main__':
     main()
-    valid_word("!pizza!")
+    # get_urls(cwd() + "/job_postings/good_jobs.txt", good_jobs)
 
 
