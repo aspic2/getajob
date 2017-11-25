@@ -6,15 +6,20 @@
 import requests
 from bs4 import BeautifulSoup
 from os import getcwd as cwd
-import re
 import string
 
 
+# Job Listings
+avant = "https://jobs.lever.co/avant/1c9e827f-19da-49ea-91cd-cce64aea0b56"
+offline_avant = "C:/Users/mthom/dvStuff/getajob/offline_html/Avant - Software Engineer.html"
+peak6 = "https://www.peak6.com/careers/843215/?gh_jid=843215"
+
+
 # file paths
-target_path = cwd() + "target.txt"
 ut = ["script", "style", "head"]
-target = target_path + "output_dict.txt"
+target = cwd() + "/target.txt"
 good_jobs_file = cwd() + "/job_postings/good_jobs.txt"
+offline_jobs_file = cwd() + "/job_postings/offline_jobs.txt"
 
 # data storage
 bad_dict = {}
@@ -22,14 +27,17 @@ good_dict = {}
 good_jobs = []
 
 
-def get_urls(filepath, url_list):
+def get_urls(filepath, url_list, online=True):
     # return a list of job posting URLs or filepaths
     with open(filepath, 'r') as f:
         for line in f:
-            # standardize this to work for local files, too
-            # -1 to get rid of \n char. -2 to get rid of " and \n
+            # TODO: standardize this to work for local files, too
             end = len(line) - 2  # compensate for linebreak and quotation
-            start = line.index("http")
+            # compensate for local files
+            if online:
+                start = line.index("http")
+            else:
+                start = line.index("C:")
             url = line[start:end]
             url_list.append(url)
     return url_list
@@ -45,6 +53,8 @@ def get_page(url, online=True):
 
 
 def get_text(soup, unwanted_tags):
+    """Should clean up the source HTML to return only displayed text.
+    Currently not fully removing CSS and Script data"""
     word_list = []
     tags_list = soup.find_all("body")
     for tag in tags_list:
@@ -53,10 +63,12 @@ def get_text(soup, unwanted_tags):
             continue
         words = tag.text.split(" ")
         for word in words:
-            # TODO: clean word param to have no punctuation before passing in
+            # TODO: this method only removes leading and trailing punctuation.
+            # TODO: revise to remove _all_ punctuation
             if valid_word(word):
                 # Normalize the words before adding them to improve comparisons
-                word_list.append(word.lower())
+                word = word.strip(string.punctuation + "\n" + '"' + "'" + "\t" + ".").lower()
+                word_list.append(word)
     return word_list
 
 
@@ -94,8 +106,8 @@ def make_soup(page):
     return soup
 
 
-def scrape_page(url, frequency_dict):
-    page = get_page(url)
+def scrape_page(url, frequency_dict, online=True):
+    page = get_page(url, online)
     s = make_soup(page)
     frequent_words = get_text(s, ut)
     w_dict = build_dict(frequency_dict, frequent_words)
@@ -112,15 +124,16 @@ def write_to_file(frequencies, target_file):
             counter += 1
 
 
-def main():
-    job_list = get_urls(good_jobs_file, good_jobs)
+def main(online=True):
+    # job_list = get_urls(good_jobs_file, good_jobs)
+    job_list = get_urls(offline_jobs_file, good_jobs, False)
     for j in job_list:
-        good_words = scrape_page(j, good_dict)
+        good_words = scrape_page(j, good_dict, online)
     write_to_file(good_words, target)
 
 
 if __name__ == '__main__':
-    main()
+    main(online=False)
     # get_urls(cwd() + "/job_postings/good_jobs.txt", good_jobs)
 
 
