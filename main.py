@@ -10,23 +10,32 @@ import string
 import re
 
 
-# Job Listings
-avant = "https://jobs.lever.co/avant/1c9e827f-19da-49ea-91cd-cce64aea0b56"
-offline_avant = "C:/Users/mthom/dvStuff/getajob/offline_html/Avant - Software Engineer.html"
-peak6 = "https://www.peak6.com/careers/843215/?gh_jid=843215"
-
-
 # file paths
 ut = ["script", "style", "head"]
-target = cwd() + "/target.txt"
+gj_target = cwd() + "/gj.txt"
+bj_target = cwd() + "/bj.txt"
 good_jobs_file = cwd() + "/job_postings/good_jobs.txt"
+bad_jobs_file = cwd() + "/job_postings/bad_jobs.txt"
 offline_jobs_file = cwd() + "/job_postings/offline_jobs.txt"
 
 # data storage
 bad_dict = {}
+bad_jobs = []
 good_dict = {}
 good_jobs = []
 punctuation = re.compile("\W")
+
+
+class JobsData(object):
+    """Store the dict and the list together in this object."""
+
+    def __init__(self, name, good=True):
+        self.j_dict = {}
+        self.j_list = []
+
+    def sort_list(self):
+        self.j_list = sorted(self.j_dict.items(), key=lambda x: x[1], reverse=True)
+        return self
 
 
 def get_urls(filepath, url_list, online=True):
@@ -117,11 +126,19 @@ def write_to_file(frequencies, target_file):
 
 
 def main(online=True):
+    gj = create_word_sets(good_jobs_file, good_jobs, good_dict, gj_target)
+    bj = create_word_sets(bad_jobs_file, bad_jobs, bad_dict, bj_target)
+    unique_good_words = (set(x[0] for x in gj) - set(x[0] for x in bj))
+    write_to_file(unique_good_words, cwd() + "/unique_good_words.txt")
+
+
+def create_word_sets(file, word_list, dictionary, new_file, online=True):
     # job_list = get_urls(good_jobs_file, good_jobs)
-    job_list = get_urls(offline_jobs_file, good_jobs, False)
+    job_list = get_urls(file, word_list, online)
     for j in job_list:
-        good_words = scrape_page(j, good_dict, online)
-    write_to_file(good_words, target)
+        word_list = scrape_page(j, dictionary, online)
+    write_to_file(word_list, new_file)
+    return word_list
 
 
 if __name__ == '__main__':
