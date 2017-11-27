@@ -1,3 +1,11 @@
+## TODO: ##
+ - Create JobData class to group list and dict together.
+ - Clean up all the parameter calls and the functions in main.
+ - Decide how to process the word frequencies received.
+ - Improve HTML parsing ability.
+ - Store data for already parsed webpages. (Those job postings will not 
+ exist forever.)
+
 # Ideas for tool #
 
 1. Search job boards (or specific company pages) for job postings with certain
@@ -30,7 +38,8 @@ and jobs that I don't like.
     
 ## ISSUES THUS FAR ##
 Trouble parsing different webpages:
-    - <style> and <script> elements making it through filters
-    - punctuation interfering with word frequency count
-    - plural words counted separately
+
+   - \<style> and \<script> elements making it through filters
+   - ~~punctuation interfering with word frequency count~~
+   - plural words counted separately
     
